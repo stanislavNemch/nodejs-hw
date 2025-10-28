@@ -7,8 +7,8 @@ import pinoHttp from 'pino-http';
 // 2. Ініціалізуємо dotenv
 dotenv.config();
 
-// 3. Отримуємо порт з змінних оточення (Критерій 1)
-const PORT = process.env.PORT || 3000;
+// 3. Отримуємо порт з змінних оточення
+const PORT = process.env.PORT;
 
 // 4. Створюємо екземпляр Express-додатку
 const app = express();

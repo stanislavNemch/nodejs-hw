@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon src/server.js"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js | pino-pretty"
   },
   "keywords": [],
   "author": "Stanislav Nemchenko <stas.buka@gmail.com>",
@@ -14,7 +15,8 @@
     "@eslint/js": "^9.38.0",
     "eslint": "^9.38.0",
     "globals": "^16.4.0",
-    "nodemon": "^3.1.10"
+    "nodemon": "^3.1.10",
+    "pino-pretty": "^13.1.2"
   },
   "dependencies": {
     "cors": "^2.8.5",

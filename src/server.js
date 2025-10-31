@@ -3,6 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import pinoHttp from 'pino-http';
+import { connectMongoDB } from './db/connectMongoDB.js';
 
 // 2. Ініціалізуємо dotenv
 dotenv.config();
@@ -12,6 +13,9 @@ const PORT = process.env.PORT || 3000;
 
 // 4. Створюємо екземпляр Express-додатку
 const app = express();
+
+// підключення до MongoDB
+await connectMongoDB();
 
 // 5. Підключаємо Middleware
 // Налаштовуємо логер pino-http

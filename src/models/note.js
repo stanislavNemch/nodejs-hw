@@ -1,44 +1,34 @@
 import { Schema, model } from 'mongoose';
+// Імпортуємо наші теги
+import { TAGS } from '../constants/tags.js';
 
-// Описуємо схему (структуру) нашої нотатки
 const noteSchema = new Schema(
   {
     title: {
       type: String,
-      required: true, // Поле є обов'язковим
-      trim: true, // Прибирає зайві пробіли на початку та в кінці
+      required: true,
+      trim: true,
     },
     content: {
       type: String,
-      required: false, // Поле не є обов'язковим
+      required: false,
       trim: true,
-      default: '', // Значення за замовчуванням, якщо нічого не передано
+      default: '',
     },
     tag: {
       type: String,
-      // enum - це перелік допустимих значень для цього поля
-      enum: [
-        'Work',
-        'Personal',
-        'Meeting',
-        'Shopping',
-        'Ideas',
-        'Travel',
-        'Finance',
-        'Health',
-        'Important',
-        'Todo',
-      ],
-      default: 'Todo', // Значення за замовчуванням
+      // Використовуємо імпортований масив
+      enum: TAGS,
+      default: 'Todo',
     },
   },
   {
-    // timestamps: true автоматично додає поля createdAt та updatedAt
     timestamps: true,
-    // versionKey: false прибирає поле __v, яке Mongoose додає за замовчуванням
     versionKey: false,
   },
 );
 
-// Створюємо та експортуємо модель 'Note'
+// Додаємо текстовий індекс для полів title та content
+noteSchema.index({ title: 'text', content: 'text' });
+
 export const Note = model('Note', noteSchema);

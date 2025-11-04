@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { errors } from 'celebrate'; // ! Імпортуємо обробник помилок 'celebra
 
 // Імпортуємо наші модулі
 import { connectMongoDB } from './db/connectMongoDB.js';
@@ -36,6 +37,9 @@ const startServer = async () => {
 
     // 5. Middleware для обробки неіснуючих маршрутів (404)
     app.use(notFoundHandler);
+
+    // Додаємо обробник помилок від 'celebrate'
+    app.use(errors());
 
     // 6. Глобальний обробник помилок (500)
     app.use(errorHandler);

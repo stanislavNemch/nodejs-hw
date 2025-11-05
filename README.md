@@ -1,7 +1,5 @@
 # Node.js: Express + MongoDB + Validation + Authorization (Домашнє Завдання 04)
 
-[🇺🇦 Українська версія](#-nodejs-express--mongodb--auth-домашнє-завдання-04) | [🇬🇧 English Version](#-nodejs-express--mongodb--auth-homework-04)
-
 Цей проєкт — повноцінний REST API сервер на Node.js з системою аутентифікації. Базуючись на попередній версії (CRUD, валідація, пагінація), цей етап додає:
 
 - Реєстрацію та логін користувачів.
@@ -167,8 +165,6 @@ nodejs-hw-04-auth/
 <br>
 
 # 🇬🇧 Node.js: Express + MongoDB + Validation + Authorization (Homework 04)
-
-[🇺🇦 Українська версія](#-nodejs-express--mongodb--auth-домашнє-завдання-04) | [🇬🇧 English Version](#-nodejs-express--mongodb--auth-homework-04)
 
 This project is a full-featured REST API server with an authentication system. Building on the previous version (CRUD, validation, pagination), this stage adds:
 

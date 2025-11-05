@@ -1,15 +1,10 @@
 import { Session } from '../models/session.js';
 import { FIFTEEN_MINUTES, ONE_DAY } from '../constants/time.js';
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-
-const { JWT_SECRET } = process.env;
 
 export const createSession = async (userId) => {
-  // 1. Генеруємо токени
-  const accessToken = jwt.sign({ userId }, JWT_SECRET, {
-    expiresIn: '15m',
-  });
+  // 1. Генеруємо ОБИДВА токени як випадкові рядки
+  const accessToken = crypto.randomBytes(32).toString('base64');
   const refreshToken = crypto.randomBytes(32).toString('base64');
 
   // 2. Встановлюємо час життя
@@ -19,7 +14,7 @@ export const createSession = async (userId) => {
   // 3. Створюємо сесію в БД
   const session = await Session.create({
     userId,
-    accessToken,
+    accessToken, // Зберігаємо випадковий рядок
     refreshToken,
     accessTokenValidUntil,
     refreshTokenValidUntil,

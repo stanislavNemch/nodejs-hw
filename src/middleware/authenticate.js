@@ -1,9 +1,6 @@
 import createHttpError from 'http-errors';
 import { Session } from '../models/session.js';
 import { User } from '../models/user.js';
-import jwt from 'jsonwebtoken';
-
-const { JWT_SECRET } = process.env;
 
 export const authenticate = async (req, res, next) => {
   try {
@@ -25,21 +22,14 @@ export const authenticate = async (req, res, next) => {
       return next(createHttpError(401, 'Access token expired'));
     }
 
-    // 4. Перевірка JWT (додаткова верифікація)
-    try {
-      jwt.verify(accessToken, JWT_SECRET);
-    } catch {
-      return next(createHttpError(401, 'Access token invalid'));
-    }
-
-    // 5. Пошук користувача
+    // 4. Пошук користувача
     const user = await User.findById(session.userId);
     if (!user) {
       // 401, але без повідомлення (для безпеки)
       return next(createHttpError(401));
     }
 
-    // 6. Додаємо користувача до запиту
+    // 5. Додаємо користувача до запиту
     req.user = user;
     next();
   } catch (err) {

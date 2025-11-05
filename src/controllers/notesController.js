@@ -21,28 +21,32 @@ export const getAllNotes = async (req, res, next) => {
     // 3. Розраховуємо пропуск (skip) для пагінації
     const skip = (page - 1) * perPage;
 
-    // 4. Отримуємо загальну кількість нотаток, що відповідають фільтру
-    // Це потрібно для розрахунку totalPages
-    const totalNotes = await Note.countDocuments(filter);
+    // 4. Створюємо обидва запити (проміси)
+    // Запит на отримання загальної кількості
+    const countPromise = Note.countDocuments(filter);
 
-    // 5. Розраховуємо загальну кількість сторінок
-    const totalPages = Math.ceil(totalNotes / perPage);
-
-    // 6. Виконуємо основний запит до БД з усіма параметрами
-    const notes = await Note.find(filter)
+    // Запит на отримання самих нотаток з пагінацією
+    const notesPromise = Note.find(filter)
       .sort({ createdAt: -1 }) // Сортуємо (новіші спочатку)
       .skip(skip) // Пропускаємо N документів
       .limit(perPage); // Обмежуємо кількість (perPage)
 
-    // 7. Відправляємо відповідь у новому форматі
+    // 5. Виконуємо обидва запити ПАРАЛЕЛЬНО за допомогою Promise.all
+    const [totalNotes, notes] = await Promise.all([countPromise, notesPromise]);
+
+    // 6. Розраховуємо загальну кількість сторінок
+    const totalPages = Math.ceil(totalNotes / perPage);
+
+    // 7. Відправляємо відповідь у форматі
     res.status(200).json({
       page: Number(page),
       perPage: Number(perPage),
       totalNotes,
       totalPages,
-      notes, // Масив нотаток
+      notes,
     });
   } catch (err) {
+    // next(err) - передає помилку далі в глобальний обробник помилок
     next(err);
   }
 };

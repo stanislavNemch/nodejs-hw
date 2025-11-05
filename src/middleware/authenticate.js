@@ -28,7 +28,7 @@ export const authenticate = async (req, res, next) => {
     // 4. Перевірка JWT (додаткова верифікація)
     try {
       jwt.verify(accessToken, JWT_SECRET);
-    } catch (err) {
+    } catch {
       return next(createHttpError(401, 'Access token invalid'));
     }
 

@@ -11,6 +11,7 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import notesRouter from './routes/notesRoutes.js';
 import authRouter from './routes/authRoutes.js'; // Імпортуємо authRouter
+import userRouter from './routes/userRoutes.js'; // ! Імпортуємо userRouter
 
 dotenv.config();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ const startServer = async () => {
     // 4. Реєструємо наші маршрути
     app.use(authRouter); // Додаємо маршрути аутентифікації
     app.use(notesRouter); // Додаємо маршрути нотаток
+    app.use(userRouter); // Додаємо маршрути користувачів
 
     // 5. Обробка 404
     app.use(notFoundHandler);

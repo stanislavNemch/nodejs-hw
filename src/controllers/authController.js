@@ -119,14 +119,19 @@ export const logoutUser = async (req, res, next) => {
 export const requestResetEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
+    console.log('📧 Reset password requested for:', email);
+
     const user = await User.findOne({ email });
 
     // 1. Якщо користувача немає - повертаємо 200
     if (!user) {
+      console.log('⚠️ User not found, but returning success for security');
       return res.status(200).json({
         message: 'Password reset email sent successfully',
       });
     }
+
+    console.log('✅ User found:', user.username);
 
     // 2. Створюємо JWT токен для скидання (15 хв)
     const token = jwt.sign(
@@ -138,10 +143,14 @@ export const requestResetEmail = async (req, res, next) => {
       { expiresIn: '15m' },
     );
 
+    console.log('🔑 JWT token created');
+
     // 3. Створюємо посилання для фронтенду
-    const resetLink = `${process.env.FRONTEND_DOMAIN}/reset-password?token=${token}`;
+    const resetLink = `${process.env.FRONTEND_DOMAIN}/auth/reset-password?token=${token}`;
+    console.log('🔗 Reset link:', resetLink);
 
     // 4. Відправляємо лист (шаблон src/templates/reset-password-email.html)
+    console.log('📨 Attempting to send email...');
     await sendEmail(
       email,
       'Reset your password',
@@ -151,14 +160,16 @@ export const requestResetEmail = async (req, res, next) => {
         link: resetLink,
       },
     );
+    console.log('✅ Email sent successfully!');
 
     // 5. Відповідь (завжди однакова для безпеки)
     res.status(200).json({
       message: 'Password reset email sent successfully',
     });
   } catch (err) {
+    console.error('❌ Error in requestResetEmail:', err);
     // Якщо sendEmail кинув помилку
-    if (err.message.includes('Failed to send')) {
+    if (err.message && err.message.includes('Failed to send')) {
       return next(createHttpError(500, err.message));
     }
     next(err);

@@ -1,5 +1,5 @@
-import express from 'express';
 import dotenv from 'dotenv';
+import express from 'express';
 import cors from 'cors';
 import { errors } from 'celebrate';
 import cookieParser from 'cookie-parser'; // Імпортуємо cookie-parser
@@ -13,6 +13,7 @@ import notesRouter from './routes/notesRoutes.js';
 import authRouter from './routes/authRoutes.js'; // Імпортуємо authRouter
 import userRouter from './routes/userRoutes.js'; // ! Імпортуємо userRouter
 
+// Завантажуємо змінні оточення
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 

@@ -3,6 +3,8 @@ import { Session } from '../models/session.js';
 import { createSession, setSessionCookies } from '../services/auth.js';
 import createHttpError from 'http-errors';
 import bcrypt from 'bcrypt';
+import { sendEmail } from '../utils/sendMail.js';
+import jwt from 'jsonwebtoken';
 
 // Контролер для POST /auth/register
 export const registerUser = async (req, res, next) => {
@@ -108,6 +110,94 @@ export const logoutUser = async (req, res, next) => {
 
     // 3. Відповідь (204 No Content - успішно, але без тіла)
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /auth/request-reset-email
+export const requestResetEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    // 1. Якщо користувача немає - повертаємо 200
+    if (!user) {
+      return res.status(200).json({
+        message: 'Password reset email sent successfully',
+      });
+    }
+
+    // 2. Створюємо JWT токен для скидання (15 хв)
+    const token = jwt.sign(
+      {
+        sub: user._id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '15m' },
+    );
+
+    // 3. Створюємо посилання для фронтенду
+    const resetLink = `${process.env.FRONTEND_DOMAIN}/reset-password?token=${token}`;
+
+    // 4. Відправляємо лист (шаблон src/templates/reset-password-email.html)
+    await sendEmail(
+      email,
+      'Reset your password',
+      'reset-password-email', // Назва шаблону
+      {
+        name: user.username,
+        link: resetLink,
+      },
+    );
+
+    // 5. Відповідь (завжди однакова для безпеки)
+    res.status(200).json({
+      message: 'Password reset email sent successfully',
+    });
+  } catch (err) {
+    // Якщо sendEmail кинув помилку
+    if (err.message.includes('Failed to send')) {
+      return next(createHttpError(500, err.message));
+    }
+    next(err);
+  }
+};
+
+// POST /auth/reset-password
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    let payload;
+
+    // 1. Верифікуємо токен
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return next(createHttpError(401, 'Invalid or expired token'));
+    }
+
+    // 2. Шукаємо користувача за даними з токена
+    const user = await User.findOne({
+      _id: payload.sub,
+      email: payload.email,
+    });
+
+    if (!user) {
+      return next(createHttpError(404, 'User not found'));
+    }
+
+    // 3. Оновлюємо пароль
+    // Ми не хешуємо пароль тут, бо хук pre('save') зробить це
+    // Нам потрібно лише змінити пароль і викликати .save()
+    user.password = password;
+    await user.save(); // Це запустить хук pre('save')
+
+    // 4. Відповідь
+    res.status(200).json({
+      message: 'Password reset successfully',
+    });
   } catch (err) {
     next(err);
   }

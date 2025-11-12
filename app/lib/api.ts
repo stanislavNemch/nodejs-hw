@@ -1,0 +1,126 @@
+import { PaginatedNotesResponse, User, Note } from "./types";
+
+// Адрес вашого бэкенду
+const API_URL = "http://localhost:3000";
+
+// Типізуємо опції
+interface FetchOptions extends RequestInit {
+    headers?: Record<string, string>;
+}
+
+/**
+ * Головна функція для всіх API-запитів з типізацією.
+ * Вона автоматично включає 'credentials: "include"'.
+ */
+async function fetchApi<T>(
+    path: string,
+    options: FetchOptions = {}
+): Promise<T> {
+    const url = `${API_URL}${path}`;
+
+    const defaultOptions: FetchOptions = {
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    };
+
+    if (options.body instanceof FormData) {
+        // ми перевіряємо, чи існує headers
+        if (defaultOptions.headers) {
+            delete defaultOptions.headers["Content-Type"];
+        }
+    }
+
+    const response = await fetch(url, { ...defaultOptions, ...options });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Something went wrong");
+    }
+
+    // Для 204 No Content (як-от /logout)
+    if (response.status === 204) {
+        return null as T; // Повертаємо null, приведений до типу T
+    }
+
+    return response.json() as Promise<T>;
+}
+
+// === AUTH API ===
+export const registerUser = (data: object): Promise<User> =>
+    fetchApi<User>("/auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+export const loginUser = (data: object): Promise<User> =>
+    fetchApi<User>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+export const logoutUser = (): Promise<null> =>
+    fetchApi<null>("/auth/logout", { method: "POST" });
+
+export const refreshSession = (): Promise<any> =>
+    fetchApi("/auth/refresh", { method: "POST" });
+
+export const requestResetEmail = (data: {
+    email: string;
+}): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>("/auth/request-reset-email", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+export const resetPassword = (data: {
+    token: string;
+    password: string;
+}): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+// === USER API ===
+export const getCurrentUser = (): Promise<User> => fetchApi<User>("/users/me");
+
+export const updateUserAvatar = (
+    formData: FormData
+): Promise<{ url: string }> =>
+    fetchApi<{ url: string }>("/users/me/avatar", {
+        method: "PATCH",
+        body: formData,
+    });
+
+// === NOTES API ===
+export const getNotes = (
+    params: Record<string, any>
+): Promise<PaginatedNotesResponse> => {
+    const query = new URLSearchParams(params).toString();
+    return fetchApi<PaginatedNotesResponse>(`/notes?${query}`);
+};
+
+export const getNoteById = (id: string): Promise<Note> =>
+    fetchApi<Note>(`/notes/${id}`);
+
+export const createNote = (data: {
+    title: string;
+    content?: string;
+    tag?: string;
+}): Promise<Note> =>
+    fetchApi<Note>("/notes", {
+        method: "POST",
+        body: JSON.stringify(data),
+    });
+
+export const updateNote = (id: string, data: object): Promise<Note> =>
+    fetchApi<Note>(`/notes/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+    });
+
+export const deleteNote = (id: string): Promise<Note> =>
+    fetchApi<Note>(`/notes/${id}`, { method: "DELETE" });

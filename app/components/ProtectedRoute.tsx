@@ -3,13 +3,17 @@ import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const { user, isLoading } = useAuth();
     const router = useRouter();
 
     useEffect(() => {
         if (!isLoading && !user) {
-            router.push("/login"); // Якщо не залогінений, відправляємо на логін
+            router.push("/login");
         }
     }, [user, isLoading, router]);
 
@@ -22,8 +26,9 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (!user) {
-        return null; // Або показувати 401 сторінку
+        return null; // Або null, поки відбувається редірект
     }
 
-    return children;
+    // Явно вказуємо, що children - це React вузол
+    return <>{children}</>;
 }

@@ -11,7 +11,7 @@ import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import notesRouter from './routes/notesRoutes.js';
 import authRouter from './routes/authRoutes.js'; // Імпортуємо authRouter
-import userRouter from './routes/userRoutes.js'; // ! Імпортуємо userRouter
+import userRouter from './routes/userRoutes.js'; // Імпортуємо userRouter
 
 // Завантажуємо змінні оточення
 dotenv.config();
@@ -23,7 +23,18 @@ const startServer = async () => {
     const app = express();
 
     app.use(logger);
-    app.use(cors());
+
+    // app.use(cors());
+
+    app.use(
+      cors({
+        // Дозволяємо запити мого фронтенду
+        origin: process.env.FRONTEND_DOMAIN,
+        // Дозволяємо передавати cookies (для аутентифікації)
+        credentials: true,
+      }),
+    );
+
     app.use(express.json());
     app.use(cookieParser()); // Додаємо cookie-parser
 

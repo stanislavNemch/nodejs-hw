@@ -4,34 +4,48 @@ import ProtectedRoute from "../../../components/ProtectedRoute";
 import { getNotes, createNote, deleteNote } from "../../../lib/api";
 import Link from "next/link";
 import { TAGS } from "../../../../constants/tags";
+import { Note, PaginatedNotesResponse } from "../../../lib/types";
 import styles from "./Notes.module.css";
 
 export default function NotesPage() {
-    const [notesData, setNotesData] = useState({ notes: [], totalPages: 1 });
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState("");
+    const [notesData, setNotesData] = useState<PaginatedNotesResponse>({
+        notes: [], // Початковий стан: пустий масив нотаток
+        totalPages: 1,
+        page: 1,
+        perPage: 10,
+        totalNotes: 0,
+    });
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string>("");
 
     // Стан для фільтрів
-    const [page, setPage] = useState(1);
-    const [tag, setTag] = useState("");
-    const [search, setSearch] = useState("");
+    const [page, setPage] = useState<number>(1);
+    const [tag, setTag] = useState<string>("");
+    const [search, setSearch] = useState<string>("");
 
     // Стан для нової нотатки
-    const [newTitle, setNewTitle] = useState("");
+    const [newTitle, setNewTitle] = useState<string>("");
 
     // Функція для завантаження нотаток
     const fetchNotes = useCallback(async () => {
         setIsLoading(true);
         try {
-            const params = { page, tag, search };
-            // Видаляємо пусті параметри
-            if (!tag) delete params.tag;
-            if (!search) delete params.search;
+            const params: Record<string, string | number> = { page };
+            if (tag) {
+                params.tag = tag;
+            }
+            if (search) {
+                params.search = search;
+            }
 
             const data = await getNotes(params);
             setNotesData(data);
-        } catch (err) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown error occurred");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -41,24 +55,32 @@ export default function NotesPage() {
         fetchNotes();
     }, [fetchNotes]);
 
-    const handleCreateNote = async (e) => {
+    const handleCreateNote = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
             await createNote({ title: newTitle });
             setNewTitle("");
             fetchNotes(); // Оновлюємо список
-        } catch (err) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown create error occurred");
+            }
         }
     };
 
-    const handleDeleteNote = async (id) => {
+    const handleDeleteNote = async (id: string) => {
         if (window.confirm("Are you sure?")) {
             try {
                 await deleteNote(id);
                 fetchNotes(); // Оновлюємо список
-            } catch (err) {
-                setError(err.message);
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message);
+                } else {
+                    setError("An unknown delete error occurred");
+                }
             }
         }
     };
@@ -73,7 +95,9 @@ export default function NotesPage() {
                     type="text"
                     placeholder="New note title..."
                     value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewTitle(e.target.value)
+                    }
                     required
                 />
                 <button type="submit" className="button">
@@ -87,9 +111,16 @@ export default function NotesPage() {
                     type="search"
                     placeholder="Search in notes..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setSearch(e.target.value)
+                    }
                 />
-                <select value={tag} onChange={(e) => setTag(e.target.value)}>
+                <select
+                    value={tag}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setTag(e.target.value)
+                    }
+                >
                     <option value="">All Tags</option>
                     {TAGS.map((t) => (
                         <option key={t} value={t}>
@@ -109,7 +140,7 @@ export default function NotesPage() {
                 <p>Loading notes...</p>
             ) : (
                 <div className={styles["notes-grid"]}>
-                    {notesData.notes.map((note) => (
+                    {notesData.notes.map((note: Note) => (
                         <div key={note._id} className={styles["note-card"]}>
                             <h3 className={styles["note-title"]}>
                                 {note.title}

@@ -14,14 +14,13 @@ import {
     refreshSession,
 } from "../lib/api";
 import { useRouter } from "next/navigation";
-import { User, AuthContextType } from "../lib/types"; // Імпортуємо наші типи
+import { User, AuthContextType } from "../lib/types";
 
 // Створюємо контекст з правильним типом
 const AuthContext = createContext<AuthContextType | null>(null);
 
 /**
  * Хук useAuth, який ПЕРЕВІРЯЄ, що контекст не null.
- * Саме це виправляє вашу помилку "Property 'user' does not exist on type 'null'".
  */
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -42,13 +41,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const currentUser = await getCurrentUser();
             setUser(currentUser);
-        } catch (error: any) {
-            if (error.message.includes("expired")) {
+        } catch (error: unknown) {
+            let errorMessage = "An unknown auth error occurred";
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+
+            if (errorMessage.includes("expired")) {
                 try {
                     await refreshSession();
                     const currentUser = await getCurrentUser();
                     setUser(currentUser);
-                } catch (refreshError) {
+                } catch {
                     setUser(null);
                 }
             } else {
@@ -81,10 +85,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         router.push("/login");
     };
 
-    // Надаємо повний тип для 'value'
     const value: AuthContextType = {
         user,
-        setUser, // Це потрібно для оновлення аватара
+        setUser,
         isLoading,
         login,
         register,

@@ -1,6 +1,6 @@
 import { PaginatedNotesResponse, User, Note } from "./types";
 
-// Адрес вашого бэкенду
+// Адрес бэкенда
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Типізуємо опції
@@ -27,7 +27,6 @@ async function fetchApi<T>(
     };
 
     if (options.body instanceof FormData) {
-        // ми перевіряємо, чи існує headers
         if (defaultOptions.headers) {
             delete defaultOptions.headers["Content-Type"];
         }
@@ -40,9 +39,8 @@ async function fetchApi<T>(
         throw new Error(errorData.message || "Something went wrong");
     }
 
-    // Для 204 No Content (як-от /logout)
     if (response.status === 204) {
-        return null as T; // Повертаємо null, приведений до типу T
+        return null as T;
     }
 
     return response.json() as Promise<T>;
@@ -64,8 +62,8 @@ export const loginUser = (data: object): Promise<User> =>
 export const logoutUser = (): Promise<null> =>
     fetchApi<null>("/auth/logout", { method: "POST" });
 
-export const refreshSession = (): Promise<any> =>
-    fetchApi("/auth/refresh", { method: "POST" });
+export const refreshSession = (): Promise<{ message: string }> =>
+    fetchApi<{ message: string }>("/auth/refresh", { method: "POST" });
 
 export const requestResetEmail = (data: {
     email: string;
@@ -97,9 +95,14 @@ export const updateUserAvatar = (
 
 // === NOTES API ===
 export const getNotes = (
-    params: Record<string, any>
+    params: Record<string, string | number>
 ): Promise<PaginatedNotesResponse> => {
-    const query = new URLSearchParams(params).toString();
+    // Конвертуємо всі значення в рядки для URLSearchParams
+    const queryParams = new URLSearchParams();
+    for (const key in params) {
+        queryParams.append(key, String(params[key]));
+    }
+    const query = queryParams.toString();
     return fetchApi<PaginatedNotesResponse>(`/notes?${query}`);
 };
 

@@ -1,13 +1,18 @@
 import "./globals.css";
 import { AuthProvider } from "./components/AuthProvider";
 import Header from "./components/Header";
+import React from "react";
 
 export const metadata = {
     title: "My Notes App",
     description: "Frontend for my Node.js notes API",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     return (
         <html lang="en">
             <body>

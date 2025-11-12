@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useAuth } from "./AuthProvider";
 import styles from "./Header.module.css";
+import Image from "next/image";
 
 export default function Header() {
     const { user, logout, isLoading } = useAuth();
@@ -21,10 +22,12 @@ export default function Header() {
                                 <>
                                     <Link href="/notes">Notes</Link>
                                     <Link href="/profile">
-                                        <img
-                                            src={user.avatar}
+                                        <Image
+                                            src={user.avatar} // 'user' тут гарантовано існує
                                             alt={user.username}
                                             className={styles.avatar}
+                                            width={40} // Обов'язкова властивість для <Image>
+                                            height={40} // Обов'язкова властивість для <Image>
                                         />
                                     </Link>
                                     <button onClick={logout} className="button">

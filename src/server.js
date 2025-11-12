@@ -22,26 +22,21 @@ const startServer = async () => {
     await connectMongoDB();
     const app = express();
 
+    // Middleware
     app.use(logger);
-
-    // app.use(cors());
-
     app.use(
       cors({
-        // Дозволяємо запити мого фронтенду
-        origin: process.env.FRONTEND_DOMAIN,
-        // Дозволяємо передавати cookies (для аутентифікації)
-        credentials: true,
+        origin: 'http://localhost:3000', // Frontend URL
+        credentials: true, // Дозволяємо куки
       }),
     );
-
     app.use(express.json());
-    app.use(cookieParser()); // Додаємо cookie-parser
+    app.use(cookieParser());
 
-    // 4. Реєструємо наші маршрути
-    app.use(authRouter); // Додаємо маршрути аутентифікації
-    app.use(notesRouter); // Додаємо маршрути нотаток
-    app.use(userRouter); // Додаємо маршрути користувачів
+    // Routes
+    app.use('/auth', authRouter);
+    app.use('/notes', notesRouter);
+    app.use('/users', userRouter);
 
     // 5. Обробка 404
     app.use(notFoundHandler);
@@ -56,7 +51,7 @@ const startServer = async () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    console.error('Failed to start server:', error);
     process.exit(1);
   }
 };

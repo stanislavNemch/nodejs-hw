@@ -1,7 +1,7 @@
 import { PaginatedNotesResponse, User, Note } from "./types";
 
 // Адрес вашого бэкенду
-const API_URL = "http://localhost:3000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 // Типізуємо опції
 interface FetchOptions extends RequestInit {

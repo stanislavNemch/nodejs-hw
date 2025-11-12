@@ -42,3 +42,8 @@ export const updateUserAvatar = async (req, res, next) => {
     next(err);
   }
 };
+
+// Контролер для GET /users/me
+export const getCurrentUser = (req, res) => {
+  res.status(200).json(req.user);
+};

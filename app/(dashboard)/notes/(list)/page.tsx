@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import ProtectedRoute from "../../../components/ProtectedRoute";
 import { getNotes, createNote, deleteNote } from "../../../lib/api";
 import Link from "next/link";
-import { TAGS } from "../../../../src/constants/tags"; // Потрібно імпортувати теги
+import { TAGS } from "../../../../constants/tags";
 import styles from "./Notes.module.css";
 
 export default function NotesPage() {

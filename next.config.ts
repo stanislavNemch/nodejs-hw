@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const config: NextConfig = {
+    images: {
+        remotePatterns: [
+            {
+                protocol: "https",
+                hostname: "ac.goit.global", // Для аватара за замовчуванням
+            },
+            {
+                protocol: "https",
+                hostname: "res.cloudinary.com", // Для завантажених аватарів
+            },
+        ],
+    },
 };
 
-export default nextConfig;
+export default config;

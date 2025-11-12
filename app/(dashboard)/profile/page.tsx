@@ -4,6 +4,7 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import { useAuth } from "../../components/AuthProvider";
 import { updateUserAvatar } from "../../lib/api";
 import styles from "./Profile.module.css";
+import Image from "next/image";
 
 export default function ProfilePage() {
     const { user, setUser } = useAuth();
@@ -32,13 +33,16 @@ export default function ProfilePage() {
 
         try {
             const res = await updateUserAvatar(formData);
-            // Оновлюємо аватар у глобальному стані!
             if (user) {
                 setUser({ ...user, avatar: res.url });
             }
             setFile(null);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown upload error occurred");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -47,10 +51,13 @@ export default function ProfilePage() {
     return (
         <ProtectedRoute>
             <div className={styles["profile-card"]}>
-                <img
-                    src={user?.avatar}
-                    alt={user?.username}
+                <Image
+                    src={user?.avatar || "/default-avatar.jpg"} // Потрібен fallback, якщо user.avatar - null
+                    alt={user?.username || "User avatar"}
                     className={styles.avatar}
+                    width={120}
+                    height={120}
+                    priority // Додаємо 'priority', оскільки це важливе зображення на сторінці
                 />
                 <h2>{user?.username}</h2>
                 <p>{user?.email}</p>

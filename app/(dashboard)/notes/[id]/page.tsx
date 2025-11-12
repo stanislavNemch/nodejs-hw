@@ -3,17 +3,19 @@ import { useState, useEffect, useCallback } from "react";
 import ProtectedRoute from "../../../components/ProtectedRoute";
 import { getNoteById, updateNote } from "../../../lib/api";
 import { useRouter } from "next/navigation";
-import { TAGS } from "../../../../src/constants/tags";
+import { TAGS } from "../../../../constants/tags";
+import { Note } from "../../../lib/types";
 
-export default function EditNotePage({ params }) {
+export default function EditNotePage({ params }: { params: { id: string } }) {
     const { id } = params;
     const router = useRouter();
-    const [note, setNote] = useState(null);
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
-    const [tag, setTag] = useState("");
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(true);
+
+    const [note, setNote] = useState<Note | null>(null);
+    const [title, setTitle] = useState<string>("");
+    const [content, setContent] = useState<string>("");
+    const [tag, setTag] = useState<string>("");
+    const [error, setError] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const fetchNote = useCallback(async () => {
         try {
@@ -22,8 +24,12 @@ export default function EditNotePage({ params }) {
             setTitle(data.title);
             setContent(data.content);
             setTag(data.tag);
-        } catch (err) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown error occurred");
+            }
         } finally {
             setIsLoading(false);
         }
@@ -33,13 +39,17 @@ export default function EditNotePage({ params }) {
         fetchNote();
     }, [fetchNote]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
             await updateNote(id, { title, content, tag });
             router.push("/notes"); // Повертаємось до списку
-        } catch (err) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown update error occurred");
+            }
         }
     };
 
@@ -59,7 +69,10 @@ export default function EditNotePage({ params }) {
                             type="text"
                             className="form-input"
                             value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            // Типізуємо подію
+                            onChange={(
+                                e: React.ChangeEvent<HTMLInputElement>
+                            ) => setTitle(e.target.value)}
                             required
                         />
                     </div>
@@ -70,7 +83,10 @@ export default function EditNotePage({ params }) {
                             className="form-input"
                             rows={5}
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            // Типізуємо подію
+                            onChange={(
+                                e: React.ChangeEvent<HTMLTextAreaElement>
+                            ) => setContent(e.target.value)}
                         />
                     </div>
                     <div className="form-group">
@@ -79,9 +95,12 @@ export default function EditNotePage({ params }) {
                             id="tag"
                             className="form-input"
                             value={tag}
-                            onChange={(e) => setTag(e.target.value)}
+                            // Типізуємо подію
+                            onChange={(
+                                e: React.ChangeEvent<HTMLSelectElement>
+                            ) => setTag(e.target.value)}
                         >
-                            {TAGS.map((t) => (
+                            {TAGS.map((t: string) => (
                                 <option key={t} value={t}>
                                     {t}
                                 </option>

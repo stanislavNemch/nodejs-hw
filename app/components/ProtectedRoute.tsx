@@ -12,23 +12,28 @@ export default function ProtectedRoute({
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            router.push("/login");
+        // Ждем, пока AuthProvider завершить перевірку
+        if (!isLoading) {
+            // Якщо перевірка завершилась і користувача НЕМАЄ
+            if (!user) {
+                // Примусово відправляємо на логін
+                router.push("/login");
+            }
         }
-    }, [user, isLoading, router]);
+    }, [user, isLoading, router]); // Залежимо від isLoading
 
+    // Поки йде перевірка, нічого не показуємо
     if (isLoading) {
         return (
             <div className="container">
-                <p>Loading page...</p>
+                <p>Checking authentication...</p>
             </div>
         );
     }
 
-    if (!user) {
-        return null; // Або null, поки відбувається редірект
+    // Якщо перевірка завершилась і користувач Є
+    if (user) {
+        return <>{children}</>;
     }
-
-    // Явно вказуємо, що children - це React вузол
-    return <>{children}</>;
+    return null;
 }

@@ -5,13 +5,13 @@ import { useSearchParams } from "next/navigation";
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams();
-    const token = searchParams.get("token"); // Отримуємо токен з URL
+    const token = searchParams.get("token");
 
-    const [password, setPassword] = useState("");
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+    const [password, setPassword] = useState<string>("");
+    const [message, setMessage] = useState<string>("");
+    const [error, setError] = useState<string>("");
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!token) {
             setError("No reset token found in URL.");
@@ -22,8 +22,12 @@ function ResetPasswordForm() {
         try {
             const res = await resetPassword({ token, password });
             setMessage(res.message);
-        } catch (err) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError("An unknown error occurred");
+            }
         }
     };
 
@@ -45,7 +49,6 @@ function ResetPasswordForm() {
                 </div>
                 {message && <p className="form-message">{message}</p>}
                 {error && <p className="form-error">{error}</p>}
-
                 <button
                     type="submit"
                     className="button"

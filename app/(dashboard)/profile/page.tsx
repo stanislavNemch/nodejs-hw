@@ -6,16 +6,18 @@ import { updateUserAvatar } from "../../lib/api";
 import styles from "./Profile.module.css";
 
 export default function ProfilePage() {
-    const { user, setUser } = useAuth(); // ! Отримуємо setUser
-    const [file, setFile] = useState(null);
-    const [error, setError] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const { user, setUser } = useAuth();
+    const [file, setFile] = useState<File | null>(null);
+    const [error, setError] = useState<string>("");
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFile(e.target.files[0]);
+        }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (!file) {
             setError("Please select a file.");
@@ -26,14 +28,16 @@ export default function ProfilePage() {
         setIsLoading(true);
 
         const formData = new FormData();
-        formData.append("avatar", file); // 'avatar' - це ключ, який чекає multer
+        formData.append("avatar", file);
 
         try {
             const res = await updateUserAvatar(formData);
             // Оновлюємо аватар у глобальному стані!
-            setUser({ ...user, avatar: res.url });
-            setFile(null); // Очищуємо інпут
-        } catch (err) {
+            if (user) {
+                setUser({ ...user, avatar: res.url });
+            }
+            setFile(null);
+        } catch (err: any) {
             setError(err.message);
         } finally {
             setIsLoading(false);

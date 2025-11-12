@@ -2,13 +2,16 @@
 import { useState, useEffect, useCallback } from "react";
 import ProtectedRoute from "../../../components/ProtectedRoute";
 import { getNoteById, updateNote } from "../../../lib/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { TAGS } from "../../../../constants/tags";
 import { Note } from "../../../lib/types";
+import React from "react";
 
-export default function EditNotePage({ params }: { params: { id: string } }) {
-    const { id } = params;
+export default function EditNotePage() {
     const router = useRouter();
+    const params = useParams();
+
+    const id = params.id as string;
 
     const [note, setNote] = useState<Note | null>(null);
     const [title, setTitle] = useState<string>("");
@@ -18,6 +21,7 @@ export default function EditNotePage({ params }: { params: { id: string } }) {
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const fetchNote = useCallback(async () => {
+        if (!id) return; // Додаємо перевірку, що id існує
         try {
             const data = await getNoteById(id);
             setNote(data);
@@ -43,7 +47,7 @@ export default function EditNotePage({ params }: { params: { id: string } }) {
         e.preventDefault();
         try {
             await updateNote(id, { title, content, tag });
-            router.push("/notes"); // Повертаємось до списку
+            router.push("/notes");
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
@@ -69,7 +73,6 @@ export default function EditNotePage({ params }: { params: { id: string } }) {
                             type="text"
                             className="form-input"
                             value={title}
-                            // Типізуємо подію
                             onChange={(
                                 e: React.ChangeEvent<HTMLInputElement>
                             ) => setTitle(e.target.value)}
@@ -83,7 +86,6 @@ export default function EditNotePage({ params }: { params: { id: string } }) {
                             className="form-input"
                             rows={5}
                             value={content}
-                            // Типізуємо подію
                             onChange={(
                                 e: React.ChangeEvent<HTMLTextAreaElement>
                             ) => setContent(e.target.value)}
@@ -95,7 +97,6 @@ export default function EditNotePage({ params }: { params: { id: string } }) {
                             id="tag"
                             className="form-input"
                             value={tag}
-                            // Типізуємо подію
                             onChange={(
                                 e: React.ChangeEvent<HTMLSelectElement>
                             ) => setTag(e.target.value)}

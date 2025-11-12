@@ -32,7 +32,7 @@ export const registerUser = async (req, res, next) => {
 };
 
 // Контролер для POST /auth/login
-export const loginUser = async (req, res, next) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
@@ -53,8 +53,36 @@ export const loginUser = async (req, res, next) => {
     const session = await createSession(user._id);
     setSessionCookies(res, session);
 
+    // Налаштування куків для розробки
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Secure тільки в production
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Lax для localhost
+    };
+
+    res.cookie('accessToken', session.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000, // 15 хвилин
+    });
+
+    res.cookie('refreshToken', session.refreshToken, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000, // 1 день
+    });
+
+    res.cookie('sessionId', session._id, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000, // 1 день
+    });
+
     // 4. Відповідь
-    res.status(200).json(user);
+    res.status(200).json({
+      status: 200,
+      message: 'Successfully logged in a user!',
+      data: {
+        accessToken: session.accessToken,
+      },
+    });
   } catch (err) {
     next(err);
   }

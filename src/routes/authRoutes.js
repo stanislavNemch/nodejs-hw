@@ -17,30 +17,26 @@ import {
 
 const router = Router();
 
-// /auth/register
+// /register
 router.post('/register', celebrate(registerUserSchema), registerUser);
 
-// /auth/login
+// /login
 router.post('/login', celebrate(loginUserSchema), loginUser);
 
-// /auth/refresh
+// /refresh
 router.post('/refresh', refreshUserSession);
 
-// /auth/logout
+// /logout
 router.post('/logout', logoutUser);
 
-// POST /auth/request-reset-email
+// POST /request-reset-email
 router.post(
   '/request-reset-email',
   celebrate(requestResetEmailSchema),
   requestResetEmail,
 );
 
-// POST /auth/reset-password
-router.post(
-  '/auth/reset-password',
-  celebrate(resetPasswordSchema),
-  resetPassword,
-);
+// POST /reset-password
+router.post('/reset-password', celebrate(resetPasswordSchema), resetPassword);
 
 export default router;

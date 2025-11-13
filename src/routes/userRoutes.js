@@ -9,11 +9,11 @@ import {
 const router = Router();
 
 // Отримуємо дані поточного користувача
-router.get('/users/me', authenticate, getCurrentUser);
+router.get('/me', authenticate, getCurrentUser);
 
 // Маршрут для оновлення аватара
 router.patch(
-  '/users/me/avatar',
+  '/me/avatar',
   authenticate, // 1. Перевіряємо, чи користувач залогінений
   upload.single('avatar'), // 2. Обробляємо 1 файл з полем 'avatar'
   updateUserAvatar, // 3. Викликаємо контролер

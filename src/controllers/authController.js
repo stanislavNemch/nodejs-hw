@@ -4,6 +4,7 @@ import { createSession, setSessionCookies } from '../services/auth.js';
 import createHttpError from 'http-errors';
 import bcrypt from 'bcrypt';
 import { sendEmail } from '../utils/sendMail.js';
+import { randomBytes } from 'crypto';
 import jwt from 'jsonwebtoken';
 
 // Контролер для POST /auth/register
@@ -36,28 +37,31 @@ export const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Пошук користувача
     const user = await User.findOne({ email });
     if (!user) {
-      return next(createHttpError(401, 'Invalid credentials'));
+      return next(createHttpError(401, 'Invalid email or password'));
     }
 
-    // 2. Перевірка паролю
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return next(createHttpError(401, 'Invalid credentials'));
+      return next(createHttpError(401, 'Invalid email or password'));
     }
 
-    // 3. Видаляємо стару сесію та створюємо нову
-    await Session.deleteMany({ userId: user._id });
-    const session = await createSession(user._id);
-    setSessionCookies(res, session);
+    await Session.deleteOne({ userId: user._id });
 
-    // Налаштування куків для розробки
+    const session = await Session.create({
+      userId: user._id,
+      accessToken: randomBytes(32).toString('base64'),
+      refreshToken: randomBytes(32).toString('base64'),
+      accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
+      refreshTokenValidUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    // Налаштування куків для production
     const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Secure тільки в production
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Lax для localhost
+      httpOnly: true, // Захист від XSS
+      secure: true, // Тільки HTTPS
+      sameSite: 'none', // Cross-origin між Vercel та Render
     };
 
     res.cookie('accessToken', session.accessToken, {
@@ -70,12 +74,11 @@ export const loginUser = async (req, res, next) => {
       maxAge: 24 * 60 * 60 * 1000, // 1 день
     });
 
-    res.cookie('sessionId', session._id, {
+    res.cookie('sessionId', session._id.toString(), {
       ...cookieOptions,
       maxAge: 24 * 60 * 60 * 1000, // 1 день
     });
 
-    // 4. Відповідь
     res.status(200).json({
       status: 200,
       message: 'Successfully logged in a user!',
@@ -91,30 +94,57 @@ export const loginUser = async (req, res, next) => {
 // Контролер для POST /auth/refresh
 export const refreshUserSession = async (req, res, next) => {
   try {
-    const { refreshToken, sessionId } = req.cookies;
+    const { sessionId, refreshToken } = req.cookies;
 
-    // 1. Пошук сесії
-    const session = await Session.findOne({
-      _id: sessionId,
-      refreshToken,
-    });
+    if (!sessionId || !refreshToken) {
+      return next(createHttpError(401, 'Session not found'));
+    }
+
+    const session = await Session.findById(sessionId);
+
     if (!session) {
       return next(createHttpError(401, 'Session not found'));
     }
 
-    // 2. Перевірка, чи не прострочений refreshToken
-    if (new Date() > new Date(session.refreshTokenValidUntil)) {
-      return next(createHttpError(401, 'Session token expired'));
+    if (session.refreshToken !== refreshToken) {
+      return next(createHttpError(401, 'Invalid refresh token'));
     }
 
-    // 3. Видаляємо стару сесію
-    await Session.findByIdAndDelete(sessionId);
+    if (new Date() > session.refreshTokenValidUntil) {
+      return next(createHttpError(401, 'Refresh token expired'));
+    }
 
-    // 4. Створюємо нову сесію
-    const newSession = await createSession(session.userId);
-    setSessionCookies(res, newSession);
+    await Session.deleteOne({ _id: sessionId });
 
-    // 5. Відповідь
+    const newSession = await Session.create({
+      userId: session.userId,
+      accessToken: randomBytes(32).toString('base64'),
+      refreshToken: randomBytes(32).toString('base64'),
+      accessTokenValidUntil: new Date(Date.now() + 15 * 60 * 1000),
+      refreshTokenValidUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    };
+
+    res.cookie('accessToken', newSession.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    });
+
+    res.cookie('refreshToken', newSession.refreshToken, {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.cookie('sessionId', newSession._id.toString(), {
+      ...cookieOptions,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
     res.status(200).json({ message: 'Session refreshed' });
   } catch (err) {
     next(err);

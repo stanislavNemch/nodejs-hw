@@ -1,35 +1,46 @@
 import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import { errors } from 'celebrate';
-import cookieParser from 'cookie-parser'; // Імпортуємо cookie-parser
+import cookieParser from 'cookie-parser';
 
-// Імпортуємо наші модулі
 import { connectMongoDB } from './db/connectMongoDB.js';
 import { logger } from './middleware/logger.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import notesRouter from './routes/notesRoutes.js';
-import authRouter from './routes/authRoutes.js'; // Імпортуємо authRouter
-import userRouter from './routes/userRoutes.js'; // Імпортуємо userRouter
+import authRouter from './routes/authRoutes.js';
+import userRouter from './routes/userRoutes.js';
 
-// Завантажуємо змінні оточення
-dotenv.config();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 const startServer = async () => {
   try {
+    console.log('📧 SMTP Configuration:');
+    console.log('  HOST:', process.env.SMTP_HOST);
+    console.log('  PORT:', process.env.SMTP_PORT);
+    console.log('  USER:', process.env.SMTP_USER);
+    console.log('  FROM:', process.env.SMTP_FROM);
+
     await connectMongoDB();
     const app = express();
 
-    // Middleware
-    app.use(logger);
+    // CORS - дозволяємо тільки ваш фронтенд
     app.use(
       cors({
-        origin: 'http://localhost:3000', // Frontend URL
+        origin: [
+          'https://nodejs-hw.vercel.app',
+          'http://localhost:3000', // Для локальної розробки
+        ],
         credentials: true, // Дозволяємо куки
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
       }),
     );
+
+    app.use(logger);
     app.use(express.json());
     app.use(cookieParser());
 
@@ -38,20 +49,17 @@ const startServer = async () => {
     app.use('/notes', notesRouter);
     app.use('/users', userRouter);
 
-    // 5. Обробка 404
+    // Error handling
     app.use(notFoundHandler);
-
-    // 6. Обробник помилок 'celebrate'
     app.use(errors());
-
-    // 7. Глобальний обробник помилок
     app.use(errorHandler);
 
     app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+      console.log(`✅ Server is running on port ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 };

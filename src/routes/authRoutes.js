@@ -18,20 +18,20 @@ import {
 const router = Router();
 
 // /auth/register
-router.post('/auth/register', celebrate(registerUserSchema), registerUser);
+router.post('/register', celebrate(registerUserSchema), registerUser);
 
 // /auth/login
-router.post('/auth/login', celebrate(loginUserSchema), loginUser);
+router.post('/login', celebrate(loginUserSchema), loginUser);
 
 // /auth/refresh
-router.post('/auth/refresh', refreshUserSession);
+router.post('/refresh', refreshUserSession);
 
 // /auth/logout
-router.post('/auth/logout', logoutUser);
+router.post('/logout', logoutUser);
 
 // POST /auth/request-reset-email
 router.post(
-  '/auth/request-reset-email',
+  '/request-reset-email',
   celebrate(requestResetEmailSchema),
   requestResetEmail,
 );

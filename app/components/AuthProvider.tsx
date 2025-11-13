@@ -16,8 +16,12 @@ import {
 import { useRouter } from "next/navigation";
 import { User, AuthContextType } from "../lib/types";
 
+// Створюємо контекст з правильним типом
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/**
+ * Хук useAuth, який ПЕРЕВІРЯЄ, що контекст не null.
+ */
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === null) {
@@ -26,6 +30,7 @@ export const useAuth = () => {
     return context;
 };
 
+// Типізуємо children
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,34 +39,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkAuthStatus = useCallback(async () => {
         setIsLoading(true);
         try {
-            // 1. Спробуємо отримати користувача
             const currentUser = await getCurrentUser();
             setUser(currentUser);
         } catch (error: unknown) {
-            // 2. Якщо 'getCurrentUser' не вдався (напр., токен 401),
-            // це ще не кінець. Спробуємо оновити сесію.
             let errorMessage = "An unknown auth error occurred";
             if (error instanceof Error) {
                 errorMessage = error.message;
             }
 
-            // Перевіряємо, чи помилка пов'язана з сесією
-            if (
-                errorMessage.includes("expired") ||
-                errorMessage.includes("401")
-            ) {
+            if (errorMessage.includes("expired")) {
                 try {
-                    // 3. Намагаємось оновити сесію
                     await refreshSession();
-                    // 4. Якщо вдалося, знову запитуємо користувача
                     const currentUser = await getCurrentUser();
                     setUser(currentUser);
                 } catch {
-                    // 5. Якщо і refresh не вдався - користувач не залогінений
                     setUser(null);
                 }
             } else {
-                // Інша помилка (не 401)
                 setUser(null);
             }
         } finally {

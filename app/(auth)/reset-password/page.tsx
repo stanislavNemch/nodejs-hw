@@ -1,15 +1,18 @@
 "use client";
 import { useState, Suspense } from "react";
 import { resetPassword } from "../../lib/api";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 function ResetPasswordForm() {
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
+    const router = useRouter();
 
     const [password, setPassword] = useState<string>("");
     const [message, setMessage] = useState<string>("");
     const [error, setError] = useState<string>("");
+    // Додамо стан завантаження, щоб блокувати кнопку під час запиту
+    const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -19,15 +22,21 @@ function ResetPasswordForm() {
         }
         setError("");
         setMessage("");
+        setIsSubmitting(true); // Блокуємо кнопку
         try {
             const res = await resetPassword({ token, password });
             setMessage(res.message);
+            // Перенаправлення через 3 секунди
+            setTimeout(() => {
+                router.push("/login");
+            }, 3000);
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message);
             } else {
                 setError("An unknown error occurred");
             }
+            setIsSubmitting(false); // Розблокуємо кнопку
         }
     };
 
@@ -45,17 +54,23 @@ function ResetPasswordForm() {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         minLength={8}
+                        disabled={isSubmitting} // Блокуємо інпут під час відправки
                     />
                 </div>
-                {message && <p className="form-message">{message}</p>}
+                {/* Відображаємо повідомлення про успіх або помилку */}
+                {message && (
+                    <p className="form-message">
+                        {message}. Redirecting to login...
+                    </p>
+                )}
                 {error && <p className="form-error">{error}</p>}
                 <button
                     type="submit"
                     className="button"
                     style={{ width: "100%" }}
-                    disabled={!token}
+                    disabled={!token || isSubmitting} // Блокуємо кнопку
                 >
-                    Set New Password
+                    {isSubmitting ? "Processing..." : "Set New Password"}
                 </button>
             </form>
         </div>

@@ -68,14 +68,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, [checkAuthStatus]);
 
     const login = async (email: string, password: string) => {
-        const loggedInUser = await loginUser({ email, password });
-        setUser(loggedInUser);
+        await loginUser({ email, password });
+        // Явно отримуємо актуальні дані користувача (з правильним аватаром)
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
         router.push("/notes");
     };
 
     const register = async (email: string, password: string) => {
-        const registeredUser = await registerUser({ email, password });
-        setUser(registeredUser);
+        await registerUser({ email, password });
+        // Аналогічно для реєстрації - отримуємо повний профіль
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
         router.push("/notes");
     };
 

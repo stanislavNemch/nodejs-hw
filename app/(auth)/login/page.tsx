@@ -59,7 +59,7 @@ export default function LoginPage() {
                 </button>
             </form>
             <p style={{ marginTop: "16px", textAlign: "center" }}>
-                <Link href="/auth/request-reset-email">Forgot password?</Link>
+                <Link href="/request-reset-email">Forgot password?</Link>
             </p>
         </div>
     );

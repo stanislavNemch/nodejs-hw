@@ -34,13 +34,13 @@ async function fetchApi<T>(
 
     const response = await fetch(url, { ...defaultOptions, ...options });
 
-    // ! === ИСПРАВЛЕНИЕ (ДОБАВЛЕНО ИСКЛЮЧЕНИЕ ДЛЯ /users/me) ===
+    // ДОБАВЛЕНО ИСКЛЮЧЕНИЕ ДЛЯ /users/me
     if (response.status === 401) {
         // Перенаправляти, ТІЛЬКИ ЯКЩО це НЕ запит на логін, рефреш АБО перевірку статусу
         if (
             !path.startsWith("/auth/login") &&
             !path.startsWith("/auth/refresh") &&
-            !path.startsWith("/users/me") // ! <-- Ось це виправлення
+            !path.startsWith("/users/me")
         ) {
             if (typeof window !== "undefined") {
                 window.location.href = "/login";
@@ -49,7 +49,6 @@ async function fetchApi<T>(
             throw new Error("Session expired or invalid, redirecting...");
         }
     }
-    // ! === КОНЕЦ ИСПРАВЛЕНИЯ ===
 
     if (!response.ok) {
         const errorData = await response.json();

@@ -37,6 +37,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     const checkAuthStatus = useCallback(async () => {
+        // Проверяем "подсказку" в localStorage перед тем, как делать запрос
+        const isLoggedIn = localStorage.getItem("isLoggedIn");
+
+        if (!isLoggedIn) {
+            setUser(null);
+            setIsLoading(false);
+            return; // Если флага нет, не делаем запрос к API
+        }
+
         setIsLoading(true);
         try {
             const currentUser = await getCurrentUser();
@@ -54,9 +63,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     setUser(currentUser);
                 } catch {
                     setUser(null);
+                    localStorage.removeItem("isLoggedIn"); // Удаляем флаг, если сессия умерла окончательно
                 }
             } else {
                 setUser(null);
+                localStorage.removeItem("isLoggedIn"); // Удаляем флаг при ошибке
             }
         } finally {
             setIsLoading(false);
@@ -69,7 +80,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const login = async (email: string, password: string) => {
         await loginUser({ email, password });
-        // Явно отримуємо актуальні дані користувача (з правильним аватаром)
+        localStorage.setItem("isLoggedIn", "true"); // Ставим флаг
         const currentUser = await getCurrentUser();
         setUser(currentUser);
         router.push("/notes");
@@ -77,7 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const register = async (email: string, password: string) => {
         await registerUser({ email, password });
-        // Аналогічно для реєстрації - отримуємо повний профіль
+        localStorage.setItem("isLoggedIn", "true"); // Ставим флаг
         const currentUser = await getCurrentUser();
         setUser(currentUser);
         router.push("/notes");
@@ -85,6 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const logout = async () => {
         await logoutUser();
+        localStorage.removeItem("isLoggedIn"); // Удаляем флаг
         setUser(null);
         router.push("/login");
     };

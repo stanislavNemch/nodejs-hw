@@ -1,12 +1,11 @@
 import { cookies } from "next/headers";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+// Адреса вашого бекенда
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export async function checkSessionServer() {
     const cookieStore = await cookies();
 
-    // 1. Збираємо куки для відправки на бекенд
-    // Бекенду потрібні refreshToken та sessionId
     const refreshToken = cookieStore.get("refreshToken")?.value;
     const sessionId = cookieStore.get("sessionId")?.value;
 
@@ -14,32 +13,28 @@ export async function checkSessionServer() {
         throw new Error("No tokens found");
     }
 
-    // 2. Робимо запит на оновлення сесії
-    const response = await fetch(`${API_URL}/auth/refresh`, {
+    // Робимо запит на бекенд від імені сервера Next.js
+    const response = await fetch(`${BACKEND_URL}/auth/refresh`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            // ! ВАЖЛИВО: Вручну передаємо куки, бо ми на сервері
+            // Вручну передаємо куки
             Cookie: `refreshToken=${refreshToken}; sessionId=${sessionId}`,
         },
-        cache: "no-store", // Не кешувати цей запит
+        cache: "no-store",
     });
 
     if (!response.ok) {
         throw new Error("Failed to refresh session");
     }
 
-    // 3. Повертаємо дані, які очікує middleware
-    // Нам потрібно витягнути заголовки Set-Cookie
-
-    // Отримуємо raw headers
+    // Повертаємо заголовки Set-Cookie, які прислав бекенд
+    // (Next.js Middleware потім передасть їх у браузер)
     const setCookieHeader = response.headers.get("set-cookie");
 
-    // Node.js fetch може повернути один рядок з комами або null
-    // Нам зручніше повернути об'єкт
     return {
         headers: {
-            "set-cookie": setCookieHeader,
+            "set-cookie": setCookieHeader ? [setCookieHeader] : [],
         },
     };
 }

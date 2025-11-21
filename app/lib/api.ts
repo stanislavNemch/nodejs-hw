@@ -1,7 +1,7 @@
 import { PaginatedNotesResponse, User, Note } from "./types";
 
 // Адрес бэкенда
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = "/api";
 
 // Типізуємо опції
 interface FetchOptions extends RequestInit {
@@ -34,22 +34,6 @@ async function fetchApi<T>(
 
     const response = await fetch(url, { ...defaultOptions, ...options });
 
-    // ДОБАВЛЕНО ИСКЛЮЧЕНИЕ ДЛЯ /users/me
-    if (response.status === 401) {
-        // Перенаправляти, ТІЛЬКИ ЯКЩО це НЕ запит на логін, рефреш АБО перевірку статусу
-        if (
-            !path.startsWith("/auth/login") &&
-            !path.startsWith("/auth/refresh") &&
-            !path.startsWith("/users/me")
-        ) {
-            if (typeof window !== "undefined") {
-                window.location.href = "/login";
-            }
-
-            throw new Error("Session expired or invalid, redirecting...");
-        }
-    }
-
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Something went wrong");
@@ -62,29 +46,49 @@ async function fetchApi<T>(
     return response.json() as Promise<T>;
 }
 
+async function fetchAuth<T>(
+    path: string,
+    options: FetchOptions = {}
+): Promise<T> {
+    // тут немає API_URL, це локальний запит
+    const url = `/api${path}`;
+
+    const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Auth error");
+    }
+    if (response.status === 204) return null as T;
+    return response.json() as Promise<T>;
+}
+
 // === AUTH API ===
 export const registerUser = (data: object): Promise<User> =>
-    fetchApi<User>("/auth/register", {
+    fetchAuth<User>("/auth/register", {
         method: "POST",
         body: JSON.stringify(data),
     });
 
 export const loginUser = (data: object): Promise<User> =>
-    fetchApi<User>("/auth/login", {
+    fetchAuth<User>("/auth/login", {
         method: "POST",
         body: JSON.stringify(data),
     });
 
 export const logoutUser = (): Promise<null> =>
-    fetchApi<null>("/auth/logout", { method: "POST" });
+    fetchAuth<null>("/auth/logout", { method: "POST" });
 
 export const refreshSession = (): Promise<{ message: string }> =>
-    fetchApi<{ message: string }>("/auth/refresh", { method: "POST" });
+    fetchAuth<{ message: string }>("/auth/refresh", { method: "POST" });
 
 export const requestResetEmail = (data: {
     email: string;
 }): Promise<{ message: string }> =>
-    fetchApi<{ message: string }>("/auth/request-reset-email", {
+    fetchAuth<{ message: string }>("/auth/request-reset-email", {
         method: "POST",
         body: JSON.stringify(data),
     });
@@ -93,7 +97,7 @@ export const resetPassword = (data: {
     token: string;
     password: string;
 }): Promise<{ message: string }> =>
-    fetchApi<{ message: string }>("/auth/reset-password", {
+    fetchAuth<{ message: string }>("/auth/reset-password", {
         method: "POST",
         body: JSON.stringify(data),
     });

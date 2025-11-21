@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { checkSessionServer } from "./app/lib/api/serverApi";
 
-// Наші маршрути
+// Маршрути
 const privateRoutes = ["/notes", "/profile"];
 const authRoutes = [
     "/login",

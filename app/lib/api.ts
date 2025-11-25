@@ -26,22 +26,20 @@ async function fetchApi<T>(
         },
     };
 
+    // ВАЖНО: для FormData нужно повністю видалити Content-Type
     if (options.body instanceof FormData) {
-        if (defaultOptions.headers) {
-            delete defaultOptions.headers["Content-Type"];
-        }
+        delete defaultOptions.headers!["Content-Type"];
     }
 
     const response = await fetch(url, { ...defaultOptions, ...options });
 
     if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Something went wrong");
+        throw new Error(errorData.message || "API error");
     }
 
-    if (response.status === 204) {
-        return null as T;
-    }
+    // Якщо відповідь 204 No Content, повертаємо null
+    if (response.status === 204) return null as T;
 
     return response.json() as Promise<T>;
 }
@@ -105,13 +103,14 @@ export const resetPassword = (data: {
 // === USER API ===
 export const getCurrentUser = (): Promise<User> => fetchApi<User>("/users/me");
 
-export const updateUserAvatar = (
-    formData: FormData
-): Promise<{ url: string }> =>
-    fetchApi<{ url: string }>("/users/me/avatar", {
+export const uploadAvatar = async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    return fetchApi<{ url: string }>("/users/me/avatar", {
         method: "PATCH",
         body: formData,
     });
+};
 
 // === NOTES API ===
 export const getNotes = (

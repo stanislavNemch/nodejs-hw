@@ -2,7 +2,7 @@
 import { useState } from "react";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import { useAuth } from "../../components/AuthProvider";
-import { updateUserAvatar } from "../../lib/api";
+import { uploadAvatar, getCurrentUser } from "../../lib/api";
 import styles from "./Profile.module.css";
 import Image from "next/image";
 
@@ -24,25 +24,17 @@ export default function ProfilePage() {
             setError("Please select a file.");
             return;
         }
-
         setError("");
         setIsLoading(true);
-
-        const formData = new FormData();
-        formData.append("avatar", file);
-
         try {
-            const res = await updateUserAvatar(formData);
-            if (user) {
-                setUser({ ...user, avatar: res.url });
-            }
+            const { url } = await uploadAvatar(file);
+            // перезапрашиваем пользователя (чтобы синхронно обновить остальные поля)
+            const fresh = await getCurrentUser();
+            setUser({ ...fresh, avatar: url });
             setFile(null);
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError("An unknown upload error occurred");
-            }
+            if (err instanceof Error) setError(err.message);
+            else setError("An unknown upload error occurred");
         } finally {
             setIsLoading(false);
         }
